@@ -82,14 +82,19 @@ The proposed AWS architecture includes:
 * IAM roles enforcing least-privilege access
 * Amazon CloudWatch for logging and monitoring
 * AWS Backup for automated data protection
+* AWS Key Management Service (KMS) for encryption of data at rest (RDS and EBS volumes)
+* AWS CloudTrail for logging and auditing all API activity
+* Amazon GuardDuty for continuous threat detection and security monitoring
+* AWS CloudFormation to provision and manage infrastructure using Infrastructure as Code
+
 
 ### Alignment with the Well-Architected Framework
 
-* **Operational Excellence**: Infrastructure as Code and automated monitoring
-* **Security**: Network isolation, IAM roles, encryption, and auditing
-* **Reliability**: Multi-AZ deployment and automated recovery
-* **Performance Efficiency**: Elastic scaling and managed services
-* **Cost Optimization**: Pay-as-you-go model with cost visibility tools
+* **Operational Excellence**: Infrastructure is provisioned using CloudFormation, enabling consistent, repeatable deployments, while CloudWatch provides automated monitoring and alerting.
+* **Security**: Network isolation is enforced using VPC design, IAM roles implement least privilege, data is encrypted using KMS, API activity is audited with CloudTrail, and GuardDuty provides continuous threat detection.
+* **Reliability**: Multi-AZ deployment across compute and database tiers ensures high availability and automated failover.
+* **Performance Efficiency**: Elastic Load Balancing and Auto Scaling allow the application to adapt automatically to changing demand.
+* **Cost Optimization**: Managed services, Auto Scaling, and AWS cost visibility tools support a pay-as-you-go model and reduce overprovisioning.
 
 ---
 
