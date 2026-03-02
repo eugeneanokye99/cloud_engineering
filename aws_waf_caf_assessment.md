@@ -1,16 +1,21 @@
-# AWS Well-Architected and Cloud Adoption Framework Assessment
+# AWS Well-Architected and Cloud Adoption Framework Assessment (Revised)
 
 ## Overview
 
-This report documents the evaluation and redesign of a two-tier web application being migrated from on-premises infrastructure to Amazon Web Services (AWS). The objective is to ensure the solution aligns with AWS best practices by applying the **AWS Well-Architected Framework (WAF)** and assessing organizational readiness using the **AWS Cloud Adoption Framework (CAF)**.
+This report documents the evaluation and redesign of a two-tier web application being migrated from on-premises infrastructure to Amazon Web Services (AWS). The goal is to align the solution with AWS best practices using the **AWS Well-Architected Framework (WAF)** and to assess organizational readiness with the **AWS Cloud Adoption Framework (CAF)**.
 
-The workload consists of a frontend web application and a backend relational database. The analysis identifies architectural risks, recommends improvements, and proposes an AWS-native design that is secure, reliable, scalable, and cost-effective.
+The workload consists of:
+
+* A **frontend/web tier** (stateless application)
+* A **backend relational database**
+
+The analysis identifies architectural risks in the current state, recommends improvements, and proposes an AWS-native target design that is secure, reliable, scalable, cost-aware, and **sustainable**. The AWS Well-Architected Framework currently includes **six pillars**, including **Sustainability**. ([AWS Documentation][1])
 
 ---
 
 ## Task 1 – Review of the Existing Architecture
 
-### Workload Components
+### Workload Components (Current State)
 
 * Frontend web application hosted on a single server
 * Backend relational database hosted on a separate server
@@ -19,85 +24,271 @@ The workload consists of a frontend web application and a backend relational dat
 
 ### Identified Risks and Weaknesses
 
-* Single points of failure due to lack of redundancy
-* No automated backup or disaster recovery strategy
-* Limited security controls and broad network access
-* Manual operational processes prone to error
-* Inability to scale dynamically based on demand
+* **Single points of failure** (no redundancy for web or database)
+* **No automated backup/disaster recovery** strategy
+* **Limited security controls** (broad network access, limited segmentation)
+* **Manual operations** (deployments, patching, monitoring) increase risk of human error
+* **No elastic scaling** to respond to changes in demand
 
 ---
 
-## Task 2 – AWS Well-Architected Framework Evaluation
+## Task 2 – AWS Well-Architected Framework Evaluation (6 Pillars)
 
-The workload was evaluated against the five pillars of the AWS Well-Architected Framework.
+The workload was evaluated against the **six pillars** of the AWS Well-Architected Framework: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, and Sustainability. ([AWS Documentation][1])
 
-| Pillar                 | Observation                          | Improvement Area             | Recommendation                                        | Supporting AWS Service                                   |
-| ---------------------- | ------------------------------------ | ---------------------------- | ----------------------------------------------------- | -------------------------------------------------------- |
-| Operational Excellence | Manual deployments and configuration | Automation and observability | Use Infrastructure as Code and centralized monitoring | AWS CloudFormation, Amazon CloudWatch                    |
-| Security               | Flat network with broad access       | Defense in depth             | Isolate resources and enforce least privilege         | Amazon VPC, IAM, Security Groups                         |
-| Reliability            | Single-instance architecture         | Fault tolerance and recovery | Deploy across multiple Availability Zones             | Elastic Load Balancer, Auto Scaling, Amazon RDS Multi-AZ |
-| Performance Efficiency | Fixed-capacity servers               | Elastic scaling              | Scale compute based on demand                         | EC2 Auto Scaling                                         |
-| Cost Optimization      | Always-on resources                  | Usage-based spending         | Monitor and right-size resources                      | AWS Cost Explorer, AWS Budgets                           |
+### WAF Findings Summary Table
 
----
+| Pillar                 | Current Observation                            | Key Risk                                                            | Recommended Improvement                                                                             | Example AWS Services                                                                |
+| ---------------------- | ---------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Operational Excellence | Manual deployments/config                      | Inconsistent changes, slow recovery                                 | Adopt IaC + CI/CD + observability (metrics/logs/alarms/runbooks)                                    | CloudFormation, CodePipeline/CodeDeploy, CloudWatch, Systems Manager                |
+| Security               | Flat network + broad access                    | Overexposure, weak segmentation                                     | Defense-in-depth: isolate tiers, least privilege, secrets management, edge protections              | VPC, Security Groups, IAM, KMS, Secrets Manager, AWS WAF, CloudTrail, GuardDuty     |
+| Reliability            | Single-instance design                         | Downtime on failure, no failover                                    | Multi-AZ for web + DB, automated backups, define RTO/RPO                                            | ALB, Auto Scaling, RDS Multi-AZ, AWS Backup                                         |
+| Performance Efficiency | Fixed-capacity servers                         | Under/over-provisioning                                             | Elastic scaling + caching and content acceleration                                                  | Auto Scaling, ALB, CloudFront, (optional) S3 for static assets                      |
+| Cost Optimization      | Always-on resources                            | Wasted spend during low usage                                       | Rightsize, scale on demand, budgets + tagging governance                                            | Cost Explorer, Budgets, Compute Optimizer, Auto Scaling                             |
+| Sustainability     | No impact tracking; potential overprovisioning | Higher energy use via low utilization and unnecessary data movement | Align supply/demand, reduce data transfer, choose efficient services/instances, measure and iterate | Auto Scaling, CloudFront caching, Graviton where suitable, S3 lifecycle, CloudWatch |
 
-## Task 3 – AWS Cloud Adoption Framework (CAF) Readiness Assessment
+### Sustainability Pillar Addendum (Required)
 
-### 1. Business Perspective
+The **Sustainability pillar** focuses on understanding and quantifying workload impacts across the lifecycle and applying design principles/best practices to reduce environmental impacts (especially energy consumption and efficiency). ([AWS Documentation][2])
 
-The organization has a clear motivation to migrate to AWS, primarily to improve system reliability and scalability. However, cloud value realization is not yet fully defined. Cost transparency and return-on-investment metrics need to be established. Key actions include defining cloud success metrics, aligning migration goals with business outcomes, and implementing financial governance practices such as cost allocation and budgeting.
+**Sustainability improvements for this workload:**
 
-### 2. People Perspective
-
-The current team has limited hands-on AWS experience. While there is strong technical knowledge of the existing system, cloud-specific skills are lacking. To address this gap, the organization should invest in AWS training, define cloud-related roles and responsibilities, and encourage certification paths for engineers and operations staff.
-
-### 3. Governance Perspective
-
-There are minimal formal policies governing cloud usage, security, and cost management. Establishing a governance model is critical before scaling workloads in AWS. Recommended actions include defining account structures, implementing tagging standards, and enforcing policies using AWS Organizations and Service Control Policies.
-
-### 4. Platform Perspective
-
-The organization does not yet have a standardized cloud platform or landing zone. Networking, identity, and shared services must be designed upfront. Creating a secure AWS landing zone with standardized VPCs, centralized logging, and shared CI/CD pipelines will enable consistent and repeatable deployments.
-
-### 5. Security Perspective
-
-Security practices are currently reactive rather than proactive. There is limited identity management and no centralized monitoring. The organization should adopt AWS-native security services, implement IAM best practices, enable encryption by default, and integrate security monitoring using AWS CloudTrail and Amazon GuardDuty.
-
-### 6. Operations Perspective
-
-Operational processes such as monitoring, incident response, and patching are manual. To operate effectively in the cloud, the organization must adopt automation-first practices. Implementing monitoring dashboards, automated backups, and runbooks will improve system resilience and reduce operational overhead.
+* **Align capacity to demand:** Use Auto Scaling and right-sizing to avoid idle compute.
+* **Reduce data movement:** Add CloudFront caching and keep data flows local where possible.
+* **Prefer managed services where appropriate:** Managed services often reduce operational overhead and improve fleet efficiency.
+* **Efficient compute choices:** Where compatible, consider newer generation instance families and/or Graviton-based instances for better performance per watt (validate compatibility and performance first).
+* **Data lifecycle policies:** Apply retention and lifecycle rules for logs/backups/artifacts to avoid unnecessary storage growth.
+* **Measure and improve:** Track utilization and request patterns (CloudWatch) and iterate.
 
 ---
 
-## Task 4 – Improved AWS Architecture Design
+## Task 3 – AWS Cloud Adoption Framework (CAF) Readiness Assessment (Aligned to the Diagram)
 
-### Architecture Description
+AWS CAF organizes readiness into **six perspectives**: **Business, People, Governance, Platform, Security, Operations**. ([Amazon Web Services, Inc.][3])
 
-The proposed AWS architecture includes:
+### 1) Business Perspective
 
-* A Virtual Private Cloud (VPC) spanning multiple Availability Zones
-* Public subnets hosting an Application Load Balancer
-* Private subnets hosting EC2 instances in an Auto Scaling Group for the web tier
-* Amazon RDS (Multi-AZ) for the database tier
-* IAM roles enforcing least-privilege access
-* Amazon CloudWatch for logging and monitoring
-* AWS Backup for automated data protection
-* AWS Key Management Service (KMS) for encryption of data at rest (RDS and EBS volumes)
-* AWS CloudTrail for logging and auditing all API activity
-* Amazon GuardDuty for continuous threat detection and security monitoring
-* AWS CloudFormation to provision and manage infrastructure using Infrastructure as Code
+**Current state:** Motivation to migrate is clear (reliability/scalability), but cloud value measurement is not formalized.
 
+**Gaps:**
 
-### Alignment with the Well-Architected Framework
+* Limited cost transparency and ROI tracking
+* Success metrics not clearly defined
 
-* **Operational Excellence**: Infrastructure is provisioned using CloudFormation, enabling consistent, repeatable deployments, while CloudWatch provides automated monitoring and alerting.
-* **Security**: Network isolation is enforced using VPC design, IAM roles implement least privilege, data is encrypted using KMS, API activity is audited with CloudTrail, and GuardDuty provides continuous threat detection.
-* **Reliability**: Multi-AZ deployment across compute and database tiers ensures high availability and automated failover.
-* **Performance Efficiency**: Elastic Load Balancing and Auto Scaling allow the application to adapt automatically to changing demand.
-* **Cost Optimization**: Managed services, Auto Scaling, and AWS cost visibility tools support a pay-as-you-go model and reduce overprovisioning.
+**Actions:**
+
+* Define measurable outcomes (availability, deployment frequency, cost per transaction, performance targets)
+* Implement chargeback/showback via tagging + cost allocation
+* Establish budget guardrails and KPI reporting (monthly)
+
+### 2) People Perspective
+
+**Current state:** Strong on-prem experience; limited AWS hands-on expertise.
+
+**Gaps:**
+
+* Skills gap in cloud networking, IAM, operations, and automation
+
+**Actions:**
+
+* Training plan (Foundational AWS + role-based learning)
+* Define cloud roles (cloud engineer, security owner, FinOps/cost owner)
+* Encourage certifications and internal playbooks/runbooks
+
+### 3) Governance Perspective
+
+**Current state:** Minimal cloud governance policies.
+
+**Gaps:**
+
+* No defined account strategy, tagging standards, or policy enforcement
+
+**Actions:**
+
+* Define multi-account approach (at minimum: dev/test/prod separation)
+* Enforce tagging standards, budgets, and baseline policies
+* Use policy guardrails (e.g., AWS Organizations + SCPs) as maturity grows
+
+### 4) Platform Perspective
+
+**Current state:** No standardized landing zone or reusable platform.
+
+**Gaps:**
+
+* Networking patterns, identity baselines, and shared services not standardized
+
+**Actions:**
+
+* Establish a “landing zone” baseline:
+
+  * Standard VPC pattern (public/private/db subnets across AZs)
+  * Centralized logging and shared CI/CD approach
+  * Reusable IaC templates for repeatable deployments
+
+### 5) Security Perspective
+
+**Current state:** Reactive security posture; limited centralized visibility.
+
+**Gaps:**
+
+* Weak identity governance, limited monitoring, unclear secrets handling
+
+**Actions:**
+
+* Enforce IAM least privilege with roles (avoid long-lived keys)
+* Encrypt data at rest and in transit
+* Centralize audit logs and add continuous threat detection
+* Add edge protection for web entry points (WAF)
+
+### 6) Operations Perspective
+
+**Current state:** Monitoring/incident response/patching are manual.
+
+**Gaps:**
+
+* Limited automation, runbooks, and operational maturity
+
+**Actions:**
+
+* Implement dashboards/alarms, incident playbooks, and backup restore testing
+* Adopt automation-first operations (patching, deployments, scaling policies)
+* Use Infrastructure as Code for repeatable, low-risk changes
+
+---
+
+## Task 4 – Improved AWS Architecture Design (Corrected + CAF-Aligned)
+
+### Target Architecture (What the “Corrected Diagram” Should Represent)
+
+**Network foundation**
+
+* One **VPC** spanning **two Availability Zones**
+* **Public subnets** (per AZ): Application Load Balancer + NAT Gateway
+* **Private app subnets** (per AZ): EC2 instances in Auto Scaling Group
+* **Private DB subnets** (per AZ): Amazon RDS Multi-AZ
+
+**Ingress and web delivery**
+
+* **Route 53** for DNS
+* (Recommended) **CloudFront** for caching/static acceleration
+* **AWS WAF** in front of the public entry (protect from common web threats)
+* **Application Load Balancer** across two AZs
+
+**Application tier**
+
+* **EC2 Auto Scaling Group** (private subnets, multi-AZ)
+* Instance profile/role with least-privilege IAM permissions
+* (Optional) Systems Manager for patching/automation
+
+**Database tier**
+
+* **Amazon RDS (Multi-AZ)** for high availability and automatic failover
+* Encryption at rest (KMS)
+
+**Security, monitoring, and audit**
+
+* **CloudWatch** for metrics/logs/alarms
+* **CloudTrail** for API auditing
+* **GuardDuty** for threat detection
+* **AWS Backup** for managed backup policies
+* (Recommended) **Secrets Manager** for database credentials
+
+**Governance/Platform enablement (CAF alignment)**
+
+* Include a small “control plane” concept:
+
+  * Account/budget/tagging governance (e.g., Organizations/SCPs as maturity grows)
+  * CI/CD pipeline deploying via IaC
+
+### Security & Access Model (Tiered)
+
+* ALB Security Group: allow inbound HTTPS (443) from the internet (or CloudFront) only
+* App Security Group: allow inbound only from ALB Security Group
+* DB Security Group: allow inbound only from App Security Group (DB port)
+* IAM: use roles for EC2; limit permissions to required services
+
+---
+
+## CAF-to-Diagram Alignment (Fixing the Mismatch)
+
+Your CAF write-up implies capabilities that must be visible (at least as “shared services” boxes) in the architecture diagram.
+
+| CAF Perspective | What the text claims                   | What must appear in the diagram to match                                           |
+| --------------- | -------------------------------------- | ---------------------------------------------------------------------------------- |
+| Governance      | Policies, cost controls, tagging       | “Governance/Control Plane” box: budgets/tagging + (optionally) Organizations/SCPs  |
+| Platform        | Landing zone + standardized network    | VPC pattern across AZs with subnet tiers + reusable IaC (CloudFormation)           |
+| Security        | Proactive monitoring, least privilege  | IAM roles, KMS, CloudTrail, GuardDuty, WAF, segmentation via subnets/SGs           |
+| Operations      | Automation-first, monitoring, runbooks | CloudWatch alarms/dashboards + (optional) SSM automation + backups/restore testing |
+| Business        | ROI and value realization              | Budgets/cost allocation note; tagging for reporting                                |
+| People          | Upskilling, defined roles              | Short note in “Implementation Plan”/Reflection (not necessarily a diagram element) |
+
+CAF defines six perspectives and their purpose; ensuring the diagram shows the enabling constructs keeps the narrative consistent. ([Amazon Web Services, Inc.][3])
 
 ---
 
 ## Reflection
 
-This lab reinforced the importance of evaluating cloud solutions holistically rather than focusing solely on service selection. Applying the AWS Well-Architected Framework provided a structured way to identify risks and improvements, while the Cloud Adoption Framework highlighted the organizational changes required for successful migration. Together, these frameworks demonstrate that effective cloud adoption is both a technical and organizational transformation. The exercise strengthened architectural reasoning and improved the ability to communicate design decisions clearly and professionally.
+This project reinforced that successful cloud migration is both a **technical** redesign and an **organizational** transformation. The AWS Well-Architected Framework provides a structured way to detect risks and improve design quality across six pillars, including Sustainability. ([AWS Documentation][1]) The AWS Cloud Adoption Framework complements this by highlighting readiness work across people, governance, platform foundations, security posture, and operations. ([Amazon Web Services, Inc.][3]) Together, they ensure the solution is not just “running on AWS,” but is operationally mature, well-governed, and continuously improvable.
+
+---
+
+## Appendix A – Lucidchart AI Prompt (AWS Icons)
+
+Copy/paste into Lucidchart AI:
+
+**Prompt:**
+
+Create an AWS architecture diagram using official AWS icons. Title: “Two-tier Web App Migration – Well-Architected + CAF Aligned”.
+
+**Layout:**
+
+* Left-to-right flow. Show **Internet → DNS/CDN/WAF → ALB → App Tier → Database**.
+* Draw one **VPC** containing **two Availability Zones (AZ-a and AZ-b)**.
+* In each AZ, show three subnets: **Public Subnet**, **Private App Subnet**, **Private DB Subnet**.
+
+**Ingress:**
+
+1. User/Internet icon → **Amazon Route 53**
+2. Route 53 → **Amazon CloudFront**
+3. CloudFront → **AWS WAF**
+4. WAF → **Application Load Balancer** (ALB spans both public subnets)
+
+**App Tier (Private App Subnets):**
+5. ALB → **EC2 Auto Scaling Group** with at least 2 EC2 instances split across AZ-a and AZ-b
+6. Add labels:
+
+* “ALB SG: inbound 443 from Internet/CloudFront”
+* “App SG: inbound 80/443 from ALB SG only”
+
+**Database Tier (Private DB Subnets):**
+7. EC2 instances → **Amazon RDS Multi-AZ** (primary in AZ-a, standby in AZ-b)
+8. Add label: “DB SG: inbound DB port from App SG only”
+
+**Outbound:**
+9. Place a **NAT Gateway** in each public subnet; private subnets route outbound through NAT in the same AZ.
+
+**Ops & Security (outside VPC on the right, dotted-line integrations):**
+10. **Amazon CloudWatch** connected to ALB, EC2, and RDS (metrics/logs/alarms)
+11. **AWS CloudTrail** connected to the account/VPC (audit)
+12. **Amazon GuardDuty** connected to CloudTrail/VPC (threat detection)
+13. **AWS KMS** connected to RDS and EC2/EBS (encryption at rest)
+14. **AWS Backup** connected to RDS (automated backups)
+15. (Recommended) **AWS Secrets Manager** connected to application and RDS credentials
+
+**CAF Alignment Overlay (top row “Control Plane”):**
+16. Add a small box labeled “Governance & Platform Enablement” containing:
+
+* **AWS Organizations (optional maturity)** + “Tagging & Budgets”
+* **AWS CloudFormation** (IaC)
+* **CI/CD: CodePipeline → CodeDeploy → EC2 Auto Scaling Group**
+
+**Annotations:**
+
+* Mark “Multi-AZ” clearly for ALB, ASG, and RDS.
+* Add a small note: “Sustainability: autoscaling + caching + right-sizing + lifecycle policies”.
+
+---
+
+[1]: https://docs.aws.amazon.com/wellarchitected/latest/framework/the-pillars-of-the-framework.html?utm_source=chatgpt.com "The pillars of the framework - AWS Well-Architected Framework"
+[2]: https://docs.aws.amazon.com/wellarchitected/latest/framework/sustainability.html?utm_source=chatgpt.com "Sustainability - AWS Well-Architected Framework"
+[3]: https://aws.amazon.com/cloud-adoption-framework/?utm_source=chatgpt.com "AWS Cloud Adoption Framework"
